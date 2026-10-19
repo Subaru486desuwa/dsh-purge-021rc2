@@ -8,8 +8,11 @@ import os from "node:os";
 import { execFileSync } from "node:child_process";
 import * as core from "../lib/core.js";
 
-const HOST = "/Users/yuqma/.npm/_npx/1e7f6d9597241db0/node_modules/@deepseek-ai";
-const DSH_HOME = "/Users/yuqma/.dsh";
+const HOST = process.env.PURGE_HOST
+  || "/Users/yuqma/.npm/_npx/1e7f6d9597241db0/node_modules/@deepseek-ai";
+// 隔离 DSH_HOME：否则 targetFiles 会把 pi-ai 的 profile 副本解析到真实用户目录并写盘。
+const DSH_HOME = fs.mkdtempSync(path.join(os.tmpdir(), "purge-home-"));
+process.env.DSH_HOME = DSH_HOME;
 const SANDBOX = fs.mkdtempSync(path.join(os.tmpdir(), "purge-host-")) + "/@deepseek-ai";
 
 fs.mkdirSync(SANDBOX, { recursive: true });

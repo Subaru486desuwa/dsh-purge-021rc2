@@ -12,6 +12,7 @@ import * as core from "../lib/core.js";
 const HOST = process.env.PURGE_HOST
   || "/Users/yuqma/.npm/_npx/1e7f6d9597241db0/node_modules/@deepseek-ai";
 // 用官方快照当"改前"样本：测试必须能在已打补丁的宿主上重复跑。
+const HAS_HOST = fs.existsSync(HOST);
 function pristine(fp) {
   const bak = `${fp}.dshpurge.bak`;
   return fs.existsSync(bak) ? bak : fp;
@@ -44,6 +45,7 @@ function assertParses(text, label) {
 }
 
 await check("#40 matches 0.2.1 system-prompt and yields valid JS", () => {
+  if (!HAS_HOST) { console.log("  · skip (no DSH host)"); return; }
   const fp = path.join(HOST, "dsh-system-prompt/lib/index.js");
   // 用官方快照当"改前"样本；没有快照才退回当前文件。
   const pristine = `${fp}.dshpurge.bak`;
@@ -89,6 +91,7 @@ await check("#127 hostFs exposes closeSync", async () => {
 });
 
 await await check("#32/#53 retarget 0.2.1 harness-dev-context", () => {
+  if (!HAS_HOST) { console.log("  · skip (no DSH host)"); return; }
   const fp = path.join(HOST, "dsh-harness-dev-context/lib/index.js");
   const source = fs.readFileSync(pristine(fp), "utf8");
   const p32 = patch(32);
@@ -99,29 +102,42 @@ await await check("#32/#53 retarget 0.2.1 harness-dev-context", () => {
   assert.equal(out32.changed, true, "#32 pattern did not match 0.2.1");
   assert.match(out32.text, /local web GUI whose URL the runtime context names/);
   assert.equal(out32.text.includes("DeepSeek Harness Web GUI whose URL"), false);
+  assert.match(out32.text, /Current web GUI URL: /);
+  // LEGACY_WEB_SURFACE 是旧会话恢复用的常量，宿主注明不能和当前 guidance 一起改。
+  assert.ok(out32.text.includes('prefix: "You are interacting with the user through the DeepSeek Harness Web GUI at "'),
+    "#32 must not rewrite LEGACY_WEB_SURFACE.prefix");
+  assert.equal(out32.text.includes('prefix: "You are interacting with the user through the local web GUI at "'), false);
   const out53 = core.applyReplacementsToText(out32.text, p53, fp);
-  assert.equal(out53.text.includes("Do not start a replacement server unless"), false);
+  const before = (source.match(/Do not start a replacement server/g) || []).length;
+  const after = (out53.text.match(/Do not start a replacement server/g) || []).length;
+  assert.equal(after, before - 1, "should remove exactly the current-template sentence");
 });
 
 await check("#77 matches the guarded clear in 0.2.1 and parses", () => {
+  if (!HAS_HOST) { console.log("  · skip (no DSH host)"); return; }
   const fp = path.join(HOST, "dsh-client-ui-conversation/lib/client.js");
   const source = fs.readFileSync(pristine(fp), "utf8");
   const p = patch(77);
   const out = core.applyReplacementsToText(source, p, fp);
   assert.equal(out.changed, true, "#77 pattern did not match 0.2.1");
-  assert.match(out.text, /if \(isRewindMarker\(event\)\)/);
+  assert.match(out.text, /typeof isRewindMarker === "function" && isRewindMarker\(event\)/);
   assertParses(out.text, "patched conversation client");
 });
 
 await check("#80 reports na when the injected minimal rows never existed", async () => {
+  if (!HAS_HOST) { console.log("  · skip (no DSH host)"); return; }
   const status = await core.patchStatus(HOST);
   assert.equal(status[80], "na", `#80 is ${status[80]}`);
 });
 
-await check("#53 has negative evidence instead of borrowing #32 marker", () => {
+await check("#53 has its own marker and preserves LEGACY_WEB_SURFACE", () => {
   const p = patch(53);
-  assert.ok(Array.isArray(p.absentMarkers) && p.absentMarkers.length > 0, "#53 has no absentMarkers");
-  assert.match(p.absentMarkers[0], /Do not start a replacement server/);
+  assert.ok(p.markers.includes("[dsh-purge] web surface prohibition removed"), "#53 lacks its own marker");
+  const source = fs.readFileSync(pristine(path.join(HOST, "dsh-harness-dev-context/lib/index.js")), "utf8");
+  const out = core.applyReplacementsToText(source, p, "harness-dev-context");
+  assert.equal(out.changed, true);
+  assert.ok(out.text.includes("Do not start a replacement server"), "LEGACY sentence was removed too");
+  assert.match(out.text, /web surface prohibition removed/);
 });
 
 await check("redteam preset closes leaf delegation on 0.2.1", () => {

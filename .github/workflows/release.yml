@@ -28,7 +28,7 @@ jobs:
       - name: Offline tests
         run: |
           node test/identity.test.mjs
-          node test/patches.test.mjs || true
+          node test/patches.test.mjs
 
       - name: Build tarball
         run: |
