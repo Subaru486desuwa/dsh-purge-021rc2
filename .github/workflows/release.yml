@@ -43,8 +43,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "v$VERSION" \
-            "dist/$TARBALL" dist/SHA256SUMS.txt \
-            --title "v$VERSION" \
-            --notes-file CHANGELOG.md \
-            --repo "$GITHUB_REPOSITORY"
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release v$VERSION already exists, adding assets"
+            gh release upload "v$VERSION" "dist/$TARBALL" dist/SHA256SUMS.txt --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "v$VERSION" \
+              "dist/$TARBALL" dist/SHA256SUMS.txt \
+              --title "v$VERSION" \
+              --notes-file CHANGELOG.md \
+              --repo "$GITHUB_REPOSITORY"
+          fi
