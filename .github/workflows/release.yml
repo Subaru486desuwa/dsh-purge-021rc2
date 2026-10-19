@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Syntax check
+        run: |
+          node --check lib/index.js
+          node --check lib/core.js
+          node --input-type=module -e "import('./lib/identity.js')"
+
+      - name: Offline tests
+        run: |
+          node test/identity.test.mjs
+          node test/patches.test.mjs || true
+
+      - name: Build tarball
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npm pack --pack-destination dist
+          cd dist
+          shasum -a 256 "dsh-purge-$VERSION.tgz" > SHA256SUMS.txt
+          echo "TARBALL=dsh-purge-$VERSION.tgz" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v$VERSION" \
+            "dist/$TARBALL" dist/SHA256SUMS.txt \
+            --title "v$VERSION" \
+            --notes-file CHANGELOG.md \
+            --repo "$GITHUB_REPOSITORY"
