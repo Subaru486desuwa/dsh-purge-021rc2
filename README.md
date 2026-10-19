@@ -109,6 +109,23 @@ hostPromptKeepsInject === true
 - `shim 目录: 未定位` 在 npx 安装下是正常现象（没有全局 `dsh` 启动器），不影响功能。
 - 本仓库不提供官方背书，使用风险自负；破甲类插件请只在自有环境做安全研究。
 
+## 维护与发布
+
+上游停更后，这个仓库自己发版，流程很短：
+
+1. 改代码，同步改 `package.json` 的 `version`（例如 `1.1.72-dsh021rc2.2`）与 `CHANGELOG.md`；
+2. 跑一遍离线测试：
+   ```sh
+   node test/identity.test.mjs && node test/patches.test.mjs
+   ```
+3. 打 tag 推上去，CI 会自动 `npm pack` + 生成 `SHA256SUMS.txt` 并发 Release：
+   ```sh
+   git tag v1.1.72-dsh021rc2.2 && git push origin v1.1.72-dsh021rc2.2
+   ```
+4. 本地升级：`PURGE_VERSION=<新版本> sh scripts/install.sh`
+
+宿主再升级导致补丁锚点漂移时，优先跑 `test/sandbox-apply.mjs` 看是哪几条 pattern 不命中，再对着真实的 `@deepseek-ai/*` 源码补 pattern。
+
 ## License
 
 MIT。原始版权 `Copyright (c) 2026 小杨`，本仓库修改部分 `Copyright (c) 2026 evilevil`。
