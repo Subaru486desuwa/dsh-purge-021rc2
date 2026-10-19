@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { execFileSync } from "node:child_process";
-import * as core from "../build/lib/core.js";
+import * as core from "../lib/core.js";
 
 const HOST = "/Users/yuqma/.npm/_npx/1e7f6d9597241db0/node_modules/@deepseek-ai";
 const DSH_HOME = "/Users/yuqma/.dsh";

@@ -7,7 +7,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import * as core from "../build/lib/core.js";
+import * as core from "../lib/core.js";
 
 const HOST = "/Users/yuqma/.npm/_npx/1e7f6d9597241db0/node_modules/@deepseek-ai";
 const patch = (id) => core.ALL_PATCHES.find((p) => p.id === id);
@@ -70,20 +70,57 @@ await check("#86 rewrites queue steer to agent.steer (#121)", () => {
 });
 
 await check("#119 no bare atomicCopyFile call remains", () => {
-  const text = fs.readFileSync(new URL("../build/lib/desktop.js", import.meta.url), "utf8");
+  const text = fs.readFileSync(new URL("../lib/desktop.js", import.meta.url), "utf8");
   assert.doesNotMatch(text, /try \{ atomicCopyFile\(/, "missing await on atomicCopyFile");
   assert.match(text, /await atomicCopyFile\(fp, bak\)/);
   assert.match(text, /export async function repairOfficialCliAfterUnpack/);
 });
 
 await check("#127 hostFs exposes closeSync", async () => {
-  const mod = await import("../build/lib/extract-asar.js");
+  const mod = await import("../lib/extract-asar.js");
   assert.equal(typeof mod.hostFs.closeSync, "function", "hostFs.closeSync is not routed");
   assert.equal(typeof mod.hostFs.fsyncSync, "function");
 });
 
-await check("redteam preset no longer declares toolFilter", () => {
-  const yml = fs.readFileSync(new URL("../build/presets/redteam/agent.cordis.yml", import.meta.url), "utf8");
+await await check("#32/#53 retarget 0.2.1 harness-dev-context", () => {
+  const fp = path.join(HOST, "dsh-harness-dev-context/lib/index.js");
+  const source = fs.readFileSync(fp, "utf8");
+  const p32 = patch(32);
+  const p53 = patch(53);
+  assert.ok(p32.file.includes("harness-dev-context"), "#32 file list not retargeted");
+  assert.ok(p53.file.includes("harness-dev-context"), "#53 file list not retargeted");
+  const out32 = core.applyReplacementsToText(source, p32, fp);
+  assert.equal(out32.changed, true, "#32 pattern did not match 0.2.1");
+  assert.match(out32.text, /local web GUI whose URL the runtime context names/);
+  assert.equal(out32.text.includes("DeepSeek Harness Web GUI whose URL"), false);
+  const out53 = core.applyReplacementsToText(out32.text, p53, fp);
+  assert.equal(out53.text.includes("Do not start a replacement server unless"), false);
+});
+
+await check("#77 matches the guarded clear in 0.2.1 and parses", () => {
+  const fp = path.join(HOST, "dsh-client-ui-conversation/lib/client.js");
+  const source = fs.readFileSync(fp, "utf8");
+  const p = patch(77);
+  const out = core.applyReplacementsToText(source, p, fp);
+  assert.equal(out.changed, true, "#77 pattern did not match 0.2.1");
+  assert.match(out.text, /if \(isRewindMarker\(event\)\)/);
+  assertParses(out.text, "patched conversation client");
+});
+
+await check("#80 reports na when the injected minimal rows never existed", async () => {
+  const status = await core.patchStatus(HOST);
+  assert.equal(status[80], "na", `#80 is ${status[80]}`);
+});
+
+await check("active redteam preset carries no unsupported toolFilter", () => {
+  const fp = path.join(os.homedir(), ".dsh/.agent-presets/redteam/agent.cordis.yml");
+  if (!fs.existsSync(fp)) return; // fresh machine: nothing installed yet
+  const text = fs.readFileSync(fp, "utf8");
+  assert.equal(text.includes("toolFilter:"), false, "active preset still has toolFilter");
+});
+
+check("redteam preset no longer declares toolFilter", () => {
+  const yml = fs.readFileSync(new URL("../presets/redteam/agent.cordis.yml", import.meta.url), "utf8");
   assert.doesNotMatch(yml, /toolFilter:/);
   assert.match(yml, /maxDepth: 1/);
 });

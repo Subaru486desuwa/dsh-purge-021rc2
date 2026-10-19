@@ -1,4 +1,17 @@
-# dsh-purge `1.1.72-dsh021rc2.1` — DSH 0.2.1-rc.2 适配版
+# dsh-purge `1.1.72-dsh021rc2.2` — DSH 0.2.1-rc.2 适配版
+
+## 1.1.72-dsh021rc2.2
+
+- **红队模式恢复**：0.2.1 已彻底移除 `tool-subagent.toolFilter`，任何还带这段的预设都会被 `agent-preset-registry` 判 `broken`，模式下拉直接消失。插件现在会在启动时检测旧预设里的 `toolFilter:` 并强制重新渲染（`lib/redteam/index.js`），同时已把本机 `~/.dsh/.agent-presets/redteam` 刷新为无 `toolFilter` 版本。
+- **#32 / #53 重定向**：0.2.1 把 Web surface 提示词从 `dsh-web-app/lib/index.js` 搬到 `dsh-harness-dev-context/lib/index.js`（`WEB_SURFACE_PROMPT` / `prefix` / `description` 三处）。新增 `harness-dev-context` 目标文件并补 0.2.1 锚点，两条从 skipped 变为 applied。
+- **#77 适配**：0.2.1 的 `append()` 用 `if (this.revised.size > 0) this.revised.clear();`（带守卫）。补第二组 pattern，回退丢弃已发送消息重新生效。
+- **#80 收敛为 na**：0.2.1 的 minimal 预设里没有本插件注入过的 fs/web 行，没有可回滚内容；新增 `naWithout` 机制，目标标记不存在时如实报 `na` 而不是 skipped。
+- **#71 收敛为 na**：未安装梁神插件时目标文件不存在，`optional: true` 让它显示 na 而不是 missing_file。
+- 新增回归用例：#32/#53 命中 0.2.1 锚点、#77 命中守卫版 `append()` 且产物可解析、#80 报 na、生效预设不含 `toolFilter`。
+
+---
+
+
 
 基座：`YuJunZhiXue/dsh-purge` **master @ 1.1.72**（上游最后一个未发布版本，tag 停在 v1.1.71）。
 目标宿主：`@deepseek-ai/dsh` / `dsh-base` **0.2.1-rc.2**（macOS，web profile，npx 安装）。

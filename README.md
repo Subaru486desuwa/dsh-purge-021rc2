@@ -6,7 +6,7 @@
 >
 > 本仓库以 **1.1.72（master）** 为基座，把 0.2.1-rc.2 上必崩的几处修掉，做成可直接安装的版本。**上游恢复维护后，请优先回到上游。**
 
-- 版本：`1.1.72-dsh021rc2.1`
+- 版本：`1.1.72-dsh021rc2.2`
 - 适配：`@deepseek-ai/dsh` / `dsh-base` **0.2.1-rc.2**（web profile，macOS 实测）
 - 基线：0.2.0-rc.2 仍可用（本版改动对 0.2.0 是向后兼容的）
 - 许可：MIT（原作者 小杨 / YuJunZhiXue，署名见文末）
@@ -51,7 +51,7 @@ curl -fsSL https://raw.githubusercontent.com/evilevil/dsh-purge-021rc2/main/scri
 ### 方式二：手动
 
 ```sh
-V=1.1.72-dsh021rc2.1
+V=1.1.72-dsh021rc2.2
 curl -fsSLO https://github.com/evilevil/dsh-purge-021rc2/releases/download/v$V/dsh-purge-$V.tgz
 curl -fsSLO https://github.com/evilevil/dsh-purge-021rc2/releases/download/v$V/SHA256SUMS.txt
 shasum -a 256 -c SHA256SUMS.txt
@@ -63,7 +63,7 @@ tar xzf dsh-purge-$V.tgz -C "$DSH_HOME/profiles/web/node_modules/dsh-purge" --st
 ### 方式三：写进 profile 依赖
 
 ```json
-"dsh-purge": "https://github.com/evilevil/dsh-purge-021rc2/releases/download/v1.1.72-dsh021rc2.1/dsh-purge-1.1.72-dsh021rc2.1.tgz"
+"dsh-purge": "https://github.com/evilevil/dsh-purge-021rc2/releases/download/v1.1.72-dsh021rc2.2/dsh-purge-1.1.72-dsh021rc2.2.tgz"
 ```
 
 ## 装完怎么用

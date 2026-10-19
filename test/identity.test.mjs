@@ -3,7 +3,7 @@
 // 0.2.1 host produces, then replays the host's interpolation rule:
 // every `{{name}}` must be a registered variable, otherwise the turn dies.
 import assert from "node:assert/strict";
-import { rewritePromptAssembly } from "../build/lib/identity.js";
+import { rewritePromptAssembly } from "../lib/identity.js";
 
 const OFFICIAL =
   "You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness. " +
