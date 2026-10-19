@@ -326,6 +326,10 @@
         provider: fork
         toolName: subagent_fork
         backgroundMode: continuable
+        # 0.2.1 移除 toolFilter 后，子代理的工具面不再由父级 deny 列表收窄。
+        # fork 若不给 maxDepth 会取 schema 默认 10：depth=1 的角色可以再 fork 出孙代理。
+        # 叶子隔离靠它兜底，不能省。
+        maxDepth: 1
 
     # Production dsh does not install these optional providers. Install the
     # matching Bundle in this Profile and restart the Host, then copy this
@@ -361,11 +365,18 @@
       config:
         provider: spawn
 
+    # 0.2.1 的 workflow / ralph 在组 spawn 请求时不带 maxDepth（见
+    # dsh-workflow-ptc/lib/index.js startChild），子代理拿到这两个工具就能绕过
+    # maxDepth 递归拉起孙代理。原预设用 toolFilter 把子代理的这两个工具 deny 掉，
+    # 该机制在 0.2.1 已删除，因此这里直接不注册，恢复"子代理是叶子"的边界。
+    # 红队五个执行角色走 tool-subagent(spawn)，不依赖 workflow / ralph。
     - id: tool-workflow
       name: '@deepseek-ai/dsh-tool-workflow'
+      disabled: true
 
     - id: tool-ralph
       name: '@deepseek-ai/dsh-tool-ralph'
+      disabled: true
       config:
         subagentProvider: spawn
         maxRounds: 64

@@ -9,7 +9,13 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import * as core from "../lib/core.js";
 
-const HOST = "/Users/yuqma/.npm/_npx/1e7f6d9597241db0/node_modules/@deepseek-ai";
+const HOST = process.env.PURGE_HOST
+  || "/Users/yuqma/.npm/_npx/1e7f6d9597241db0/node_modules/@deepseek-ai";
+// 用官方快照当"改前"样本：测试必须能在已打补丁的宿主上重复跑。
+function pristine(fp) {
+  const bak = `${fp}.dshpurge.bak`;
+  return fs.existsSync(bak) ? bak : fp;
+}
 const patch = (id) => core.ALL_PATCHES.find((p) => p.id === id);
 
 let passed = 0;
@@ -84,7 +90,7 @@ await check("#127 hostFs exposes closeSync", async () => {
 
 await await check("#32/#53 retarget 0.2.1 harness-dev-context", () => {
   const fp = path.join(HOST, "dsh-harness-dev-context/lib/index.js");
-  const source = fs.readFileSync(fp, "utf8");
+  const source = fs.readFileSync(pristine(fp), "utf8");
   const p32 = patch(32);
   const p53 = patch(53);
   assert.ok(p32.file.includes("harness-dev-context"), "#32 file list not retargeted");
@@ -99,7 +105,7 @@ await await check("#32/#53 retarget 0.2.1 harness-dev-context", () => {
 
 await check("#77 matches the guarded clear in 0.2.1 and parses", () => {
   const fp = path.join(HOST, "dsh-client-ui-conversation/lib/client.js");
-  const source = fs.readFileSync(fp, "utf8");
+  const source = fs.readFileSync(pristine(fp), "utf8");
   const p = patch(77);
   const out = core.applyReplacementsToText(source, p, fp);
   assert.equal(out.changed, true, "#77 pattern did not match 0.2.1");
@@ -110,6 +116,31 @@ await check("#77 matches the guarded clear in 0.2.1 and parses", () => {
 await check("#80 reports na when the injected minimal rows never existed", async () => {
   const status = await core.patchStatus(HOST);
   assert.equal(status[80], "na", `#80 is ${status[80]}`);
+});
+
+await check("#53 has negative evidence instead of borrowing #32 marker", () => {
+  const p = patch(53);
+  assert.ok(Array.isArray(p.absentMarkers) && p.absentMarkers.length > 0, "#53 has no absentMarkers");
+  assert.match(p.absentMarkers[0], /Do not start a replacement server/);
+});
+
+await check("redteam preset closes leaf delegation on 0.2.1", () => {
+  const yml = fs.readFileSync(new URL("../presets/redteam/agent.cordis.yml", import.meta.url), "utf8");
+  const fork = yml.slice(yml.indexOf("id: tool-subagent-fork"), yml.indexOf("id: tool-subagent-codex"));
+  assert.match(fork, /maxDepth: 1/, "tool-subagent-fork has no maxDepth");
+  const wf = yml.slice(yml.indexOf("id: tool-workflow"), yml.indexOf("id: tool-ralph"));
+  assert.match(wf, /disabled: true/, "tool-workflow still enabled");
+  const ralph = yml.slice(yml.indexOf("id: tool-ralph"), yml.indexOf("remaining model-facing rows"));
+  assert.match(ralph, /disabled: true/, "tool-ralph still enabled");
+});
+
+await check("every naWithout token is plugin-private", () => {
+  const tokens = core.ALL_PATCHES.filter((p) => p.naWithout).map((p) => p.naWithout);
+  const haystack = JSON.stringify(core.ALL_PATCHES);
+  for (const token of tokens) {
+    assert.ok(token.includes("[dsh-purge]"), `naWithout token is not private: ${token}`);
+    assert.ok(haystack.includes(token), `naWithout token not produced by any patch: ${token}`);
+  }
 });
 
 await check("active redteam preset carries no unsupported toolFilter", () => {

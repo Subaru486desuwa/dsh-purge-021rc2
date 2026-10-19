@@ -1,4 +1,18 @@
-# dsh-purge `1.1.72-dsh021rc2.2` — DSH 0.2.1-rc.2 适配版
+# dsh-purge `1.1.72-dsh021rc2.3` — DSH 0.2.1-rc.2 适配版
+
+## 1.1.72-dsh021rc2.3
+
+安全评审（应用安全工程师 / 软件架构师）提出的阻断项：
+
+- **叶子委派封口**：`tool-subagent-fork` 补 `maxDepth: 1`（0.2.1 默认 10，depth=1 角色本可再 fork 出孙代理）；`tool-workflow` / `tool-ralph` 在红队预设里 `disabled: true` —— 宿主的 workflow/ralph 组 spawn 请求不带 maxDepth（`dsh-workflow-ptc` startChild），删掉旧 `toolFilter` 后这是唯一能递归的路径。五角色流程走 `tool-subagent`，不依赖这两个工具。
+- **预设覆盖护栏**：`toolFilter` 嗅探改为行首正则；覆盖前写 `.bak-<ts>`（0600）；目标是符号链接时拒绝写穿；写临时文件 + `renameSync` 原子替换；失败只记日志不落半截 YAML。
+- **状态可取证**：`#32` 的 prefix 替换带上 `[dsh-purge]` 标记，不再借 `web-app-lib` 的旧 marker；`#53` 改用删除型证据 `absentMarkers`（那句不在 = 目标达成），不再与 #32 共用 marker；多文件补丁新增 `partial` 状态，一个文件不到位就不再报 applied。
+- **na 口径修正**：`na` 按"已定位文件数"判定，不再拿 key 数当分母；`naWithout` 加单测，必须是 `[dsh-purge]` 私有标记且真的由某个补丁产出。
+- **测试 hermetic**：`#32/#53/#77` 改为从 `.dshpurge.bak` 取"改前"样本，在已打补丁的宿主上也能全绿；`HOST` 支持 `PURGE_HOST` 覆盖。
+
+---
+
+
 
 ## 1.1.72-dsh021rc2.2
 
