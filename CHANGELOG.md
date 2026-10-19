@@ -1,4 +1,19 @@
-# dsh-purge `1.1.72-dsh021rc2.3` — DSH 0.2.1-rc.2 适配版
+# dsh-purge `1.1.72-dsh021rc2.4` — DSH 0.2.1-rc.2 适配版
+
+## 1.1.72-dsh021rc2.4
+
+红队环境适配的安全与可信度收敛（专家团评审项）：
+
+- **API 鉴权**：`/redteam/api` 不再对回环连接一律放行。浏览器请求必须 `Host` 是本机且 `Origin` 与 `Host` 同源；`app://` 仅在本机 Host 下放行；无 Origin 的本机进程保留。伪造 Origin 与 DNS rebinding 都会被 403。
+- **密钥边界**：`platformSummary()` 对 `FOFA_KEY`/`REDTEAM_VPS_*` 只返回空串 + `envPresent`；preflight 不再带明文。配置文件改为原子写（tmp + rename）并强制 `0600`，目录 `0700`。
+- **空值语义**：保存时空串不再清空已存密钥（与 UI「留空＝不覆盖」一致），清除需显式 `clearEnv`。
+- **工具解析**：`config.tools` 只接受绝对路径，必须是普通文件且有执行位；`httpx` 的 Python CLI 拒绝逻辑同样作用于 config。目录、非可执行文件、`~/...` 未展开路径都不再被当成"已找到"。
+- **门禁语义**：只有「保存过路径且至少解析到一个可执行文件」才算 configured；仅保存了错路径/已卸载工具会报 `need-config`；有效配置优先于 skip；skip 且路径失效时会明确提示。
+- 新增 `test/redteam-env.test.mjs`（10 项：目录/非可执行/Python httpx、0600、空值保留、密钥掩码、stale 路径、skip 优先级）。
+
+---
+
+
 
 ## 1.1.72-dsh021rc2.3
 
