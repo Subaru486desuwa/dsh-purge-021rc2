@@ -38,6 +38,7 @@ jobs:
           shasum -a 256 "dsh-purge-$VERSION.tgz" > SHA256SUMS.txt
           echo "TARBALL=dsh-purge-$VERSION.tgz" >> "$GITHUB_ENV"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          node -e 'const fs = require("node:fs"); fs.writeFileSync("release-notes.md", fs.readFileSync("../CHANGELOG.md", "utf8").split("\n---")[0]);'
 
       - name: Publish release
         env:
@@ -50,6 +51,6 @@ jobs:
             gh release create "v$VERSION" \
               "dist/$TARBALL" dist/SHA256SUMS.txt \
               --title "v$VERSION" \
-              --notes-file CHANGELOG.md \
+              --notes-file dist/release-notes.md \
               --repo "$GITHUB_REPOSITORY"
           fi

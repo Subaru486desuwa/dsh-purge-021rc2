@@ -4,7 +4,7 @@
 
 - 当前版本：`1.1.72-dsh021rc2.5`
 - 基于 [evilevil/dsh-purge-021rc2](https://github.com/evilevil/dsh-purge-021rc2)；原项目为 [小杨 / YuJunZhiXue 的 dsh-purge](https://github.com/YuJunZhiXue/dsh-purge)。保留双方版权和 MIT 许可证。
-- 目标环境：DSH Desktop **0.12.1 / macOS ARM64 / web profile**，内置 harness **0.2.1-rc.2**。
+- 实测环境：DSH Desktop **0.12.1 / macOS ARM64 / web profile**，内置 harness **0.2.1-rc.2**。
 
 ## 安装并恢复对话
 
@@ -80,6 +80,8 @@ node test/desktop-prompt.mjs
 # 需要验证整套既有补丁时：只会修改临时副本。
 node test/sandbox-apply.mjs
 ```
+
+本版已在 DSH Desktop 0.12.1 的原失败会话中完成真实请求：3 秒返回预期验收文本。未升级 harness，也未点击整套宿主补丁的「应用」。
 
 测试、构建、Git 操作在 Linux 上进行；桌面启动和真实对话验收在 macOS 上进行。Windows 路径未在本分支验证。
 
