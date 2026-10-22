@@ -27,12 +27,12 @@ jobs:
 
       - name: Offline tests
         run: |
-          node test/identity.test.mjs
-          node test/patches.test.mjs
+          npm test
 
       - name: Build tarball
         run: |
           VERSION=$(node -p "require('./package.json').version")
+          mkdir -p dist
           npm pack --pack-destination dist
           cd dist
           shasum -a 256 "dsh-purge-$VERSION.tgz" > SHA256SUMS.txt

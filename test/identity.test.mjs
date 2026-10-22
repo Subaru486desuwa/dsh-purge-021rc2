@@ -91,6 +91,7 @@ check("inject text containing {{cwd}} survives 0.2.1", () => {
   const vars = { provider: "deepseek", model: "m" };
   const out = rewritePromptAssembly(assembled(vars), "Use {{cwd}} as your root.");
   assert.doesNotThrow(() => renderSections(out.sections, vars));
+  assert.ok(out.sections.some((section) => section.interpolate === false && section.text.includes("Use {{cwd}} as your root.")), "literal inject text was modified");
 });
 
 console.log(`\n${passed} checks passed`);

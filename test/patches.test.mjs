@@ -9,8 +9,8 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import * as core from "../lib/core.js";
 
-const HOST = process.env.PURGE_HOST
-  || "/Users/yuqma/.npm/_npx/1e7f6d9597241db0/node_modules/@deepseek-ai";
+const HOST = process.env.PURGE_HOST || "";
+if (HOST && !fs.existsSync(HOST)) throw new Error(`PURGE_HOST does not exist: ${HOST}`);
 // 用官方快照当"改前"样本：测试必须能在已打补丁的宿主上重复跑。
 const HAS_HOST = fs.existsSync(HOST);
 function pristine(fp) {
@@ -133,6 +133,7 @@ await check("#80 reports na when the injected minimal rows never existed", async
 await check("#53 has its own marker and preserves LEGACY_WEB_SURFACE", () => {
   const p = patch(53);
   assert.ok(p.markers.includes("[dsh-purge] web surface prohibition removed"), "#53 lacks its own marker");
+  if (!HAS_HOST) { console.log("  · skip host fixture (set PURGE_HOST)"); return; }
   const source = fs.readFileSync(pristine(path.join(HOST, "dsh-harness-dev-context/lib/index.js")), "utf8");
   const out = core.applyReplacementsToText(source, p, "harness-dev-context");
   assert.equal(out.changed, true);

@@ -1,4 +1,16 @@
-# dsh-purge `1.1.72-dsh021rc2.4` — DSH 0.2.1-rc.2 适配版
+# dsh-purge — 版本记录
+
+## 1.1.72-dsh021rc2.5
+
+基于 evilevil 的 `1.1.72-dsh021rc2.4`，只补充此次桌面兼容修复与交付路径：
+
+- 继承社区版 cwd 能力探测；修正末尾清理对 `interpolate: false` 字面量正文的误改，保留用户示例和原生工作目录上下文。
+- 安装脚本支持 DSH Desktop 默认目录与显式 `DSH_HOME`；先验证、解包，再备份替换，失败可恢复。
+- 安装脚本不再伪造 `applied.json` / `installed-rev`。推荐插件管理器持久写入依赖与锁文件；仅修 cwd 不要求点击「应用」。
+- 增加安装失败、旧目录优先级和真实宿主渲染回放测试；去掉测试对维护者个人目录的依赖。
+- 发布源改为 Subaru486desuwa 的 fork，保留 YuJunZhiXue 与 evilevil 的署名和 MIT 版权。面板内置更新器的查询、下载、依赖锁定和版本选择同步切到本仓库 `main` / tags。
+
+---
 
 ## 1.1.72-dsh021rc2.4
 
